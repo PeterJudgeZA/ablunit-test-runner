@@ -16,7 +16,7 @@ interface IOEProfile {
 	value: IOpenEdgeConfig
 }
 
-interface IOERuntime {
+export interface IOERuntime {
 	name: string
 	path: string
 	pathExists: boolean
@@ -287,7 +287,13 @@ function readGlobalOpenEdgeRuntimes (workspaceUri: Uri) {
 	}
 }
 
-function getDlcDirectory (version: string): string {
+export function getOeRuntime () : IOERuntime | undefined {
+	const oeRuntime = undefined
+
+	return oeRuntime
+}
+
+export function getDlcDirectory (version: string): string {
 	let dlc = ''
 	let dfltDlc = ''
 	let dfltName = ''

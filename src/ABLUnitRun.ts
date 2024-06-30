@@ -154,7 +154,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 
 				const rejectErrs: string[] = []
 				if (err) {
-					log.error('Error = ' + err.name + ' (ExecExcetion)\r\n   ' + err.message, options)
+					log.error('Error = ' + err.name + ' (ExecException)\r\n   ' + err.message, options)
 					log.error('err=' + JSON.stringify(err))
 					rejectErrs.push(err.name + ' - ' + err.message)
 				}
