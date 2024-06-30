@@ -6,7 +6,7 @@ import { getProfileConfig, RunConfig } from './parse/TestProfileParser'
 import { IABLUnitJson, ITestObj } from './ABLResults'
 import { CoreOptions } from './parse/config/CoreOptions'
 import { ProfilerOptions } from './parse/config/ProfilerOptions'
-import { getOpenEdgeProfileConfig, IBuildPathEntry, IDatabaseConnection, ProfileConfig } from './parse/OpenedgeProjectParser'
+import { getOpenEdgeProfileConfig, IBuildPathEntry, IDatabaseConnection, ProfileConfig, getDlcDirectory, getDLC } from './parse/OpenedgeProjectParser'
 
 export const ablunitConfig = new WeakMap<WorkspaceFolder, RunConfig>()
 
@@ -121,9 +121,39 @@ export class ABLUnitConfig  {
 		}
 	}
 
+	replaceEnvVars (path: string, dlcDir: string): string {
+
+		let res = path.match(/(\$\{\w+\})/g)
+		let envVarValue: string = ''
+
+		for (const e of res!) {
+			const endIdx = e.search('\}')
+			// e is something like ${DLC}. Get the name only
+			//					   012345
+			const envVarName: string = e.substring(2, endIdx - 1)
+			switch (envVarName) {
+				case 'DLC':
+					envVarValue = dlcDir || '$\{DLC\}'
+					break;
+				default:
+					// If the env var does not exist, use the variable name
+					envVarValue = process.env[envVarName] || '$\{' + envVarName + '\}'
+					break;
+			}
+
+			path = path.replace(e, envVarValue)
+		}
+
+		return path
+	}
+
 	readPropathFromJson () {
+
 		log.info('reading propath from openedge-project.json')
 		const parser: PropathParser = new PropathParser(this.ablunitConfig.workspaceFolder)
+
+		const dlc = getDLC(this.ablunitConfig.workspaceFolder, this.ablunitConfig.openedgeProjectProfile, '')
+		const dlcDir: string = getDlcDirectory(dlc.version!)
 
 		let conf: ProfileConfig | undefined = undefined
 		if (this.ablunitConfig.importOpenedgeProjectJson) {
@@ -133,7 +163,7 @@ export class ABLUnitConfig  {
 			const pathObj: IBuildPathEntry[] = []
 			for (const e of conf.buildPath) {
 				pathObj.push({
-					path: e.path,
+					path: this.replaceEnvVars(e.path, dlcDir!),
 					type: e.type.toLowerCase(),
 					buildDir: e.buildDir,
 					xrefDir: e.xrefDir
